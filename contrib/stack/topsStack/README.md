@@ -90,12 +90,7 @@ The generated run files are self descriptive. Below is a short explanation on wh
 
 **run_01_unpack_slc_topo_reference:**
 
-<<<<<<< HEAD
-Includes commands to unpack Sentinel-1 TOPS SLCs using ISCE readers. For older SLCs which need antenna elevation pattern correction, the file is extracted and written to disk. For newer version of SLCs which don’t need the elevation antenna pattern correction, only a gdal virtual “vrt” file (and isce xml file) is generated. The “.vrt” file points to the Sentinel SLC file and reads them whenever required during the processing. If a user wants to write the “.vrt” SLC file to disk, it can be done easily using gdal_translate (e.g. gdal_translate –of ENVI File.vrt File.slc).
-The “run_01_unpack_slc_topo_reference” also includes a command that refers to the config file of the stack reference, which includes configuration for running topo for the stack reference. Note that in the pair-wise processing strategy one should run topo (mapping from range-Doppler to geo coordinate) for all pairs. However, with stackSentinel, topo needs to be run only one time for the reference in the stack.
-=======
 Includes a command that refers to the config file of the stack reference, which includes configuration for running `topo` for the stack reference. Note that in the pair-wise processing strategy, one should run `topo` (mapping from range-Doppler to geo coordinate) for all pairs. However, with `stackSentinel.py`, `topo` needs to be run only one time for the reference in the stack. This stage will also unpack Sentinel-1 TOPS reference SLC. Reference geometry files are saved under `geom_reference/`. Reference burst SLCs are saved under `reference/`.
->>>>>>> 4888627 (suggest to update topStack processor README.md)
 
 **run_02_unpack_secondary_slc:**
 
@@ -107,19 +102,11 @@ Computes average baseline for the stack, saved under `baselines/`. These baselin
 
 **run_04_extract_burst_overlaps:**
 
-<<<<<<< HEAD
-Running geo2rdr to estimate geometrical offsets between secondary burst overlaps and the stack reference burst overlaps. The secondary burst overlaps are then resampled to the stack reference burst overlaps.
-=======
 Burst overlaps are extracted for estimating azimuth misregistration using the [NESD technique](https://ieeexplore.ieee.org/document/7637021). If coregistration method is chosen to be “geometry”, then this run file won’t exist and the overlaps are not extracted. Saved under `reference/overlap/` and `geom_reference/overlap`.
->>>>>>> 4888627 (suggest to update topStack processor README.md)
 
 **run_05_overlap_geo2rdr:**
 
-<<<<<<< HEAD
-Using the coregistered stack burst overlaps generated from the previous step, differential overlap interferograms are generated and are used for estimating azimuth misregistration using Enhanced Spectral Diversity (ESD) technique.
-=======
 Running geo2rdr to estimate geometrical offsets between secondary burst overlaps (`secondary/`) and the stack reference (`reference`) burst overlaps. Saved under `coreg_secondarys/YYYYMMDD/overlap`.
->>>>>>> 4888627 (suggest to update topStack processor README.md)
 
 **run_06_overlap_resample:**
 
@@ -127,11 +114,7 @@ The secondary burst overlaps are then resampled to the stack reference burst ove
 
 **run_07_pairs_misreg:**
 
-<<<<<<< HEAD
-Using orbit and DEM, geometrical offsets among all secondary SLCs and the stack reference is computed. The goometrical offsets, together with the misregistration time-series (from previous step) are used for precise coregistration of each burst SLC.
-=======
 Using the coregistered stack burst overlaps generated from the previous step, differential overlap interferograms are generated and are used for estimating azimuth misregistration using Enhanced Spectral Diversity (ESD) technique. Saved under `misreg/azimuth/pairs/` and `misreg/range/pairs/`.
->>>>>>> 4888627 (suggest to update topStack processor README.md)
 
 **run_08_timeseries_misreg:**
 
