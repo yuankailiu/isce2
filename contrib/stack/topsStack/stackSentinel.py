@@ -147,7 +147,7 @@ def createParser():
 
     coreg.add_argument('--snr_misreg_threshold', dest='snrThreshold', type=str, default='10',
                        help='SNR threshold for estimating range misregistration using cross correlation (default: %(default)s).')
-    
+
     coreg.add_argument('-e', '--esd_coherence_threshold', dest='esdCoherenceThreshold', type=str, default='0.85',
                        help='Coherence threshold for estimating azimuth misregistration using enhanced spectral diversity (default: %(default)s).')
 
@@ -902,7 +902,7 @@ def ionosphereStack(inps, dateListIonUpdate, dateListIon, stackReferenceDate, pa
         runObj.finalize()
 
     del ionParamUsrObj
-        
+
 
     return i
 
@@ -1060,7 +1060,6 @@ def main(iargs=None):
 
         dateListIonUpdate, pairs_same_starting_ranges_update, pairs_diff_starting_ranges_update, safe_dict, dateListIon = checkCurrentStatusIonosphere(inps)
         i = ionosphereStack(inps, dateListIonUpdate, dateListIon, stackReferenceDate, pairs_same_starting_ranges_update, pairs_diff_starting_ranges_update, safe_dict, i)
-
 
 if __name__ == "__main__":
     # Main engine
