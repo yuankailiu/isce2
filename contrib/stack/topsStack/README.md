@@ -6,9 +6,9 @@ The detailed algorithm for stack processing of TOPS data can be find here:
 
 -----------------------------------
 
-To use the sentinel stack processor, make sure to add the path of your `contrib/stack/topsStack` folder to your `$PATH` environment varibale. 
+To use the sentinel stack processor, make sure to add the path of your `contrib/stack/topsStack` folder to your `$PATH` environment varibale.
 
-The scripts provides support for Sentinel-1 TOPS stack processing. Currently supported workflows include a coregistered stack of SLC, interferograms, offsets, and coherence. 
+The scripts provides support for Sentinel-1 TOPS stack processing. Currently supported workflows include a coregistered stack of SLC, interferograms, offsets, and coherence.
 
 `stackSentinel.py` generates all configuration and run files required to be executed on a stack of Sentinel-1 TOPS data. When stackSentinel.py is executed for a given workflow (-W option) a **configs** and **run_files** folder is generated. No processing is performed at this stage. Within the run_files folder different run\_#\_description files are contained which are to be executed as shell scripts in the run number order. Each of these run scripts call specific configure files contained in the “configs” folder which call ISCE in a modular fashion. The configure and run files will change depending on the selected workflow. To make run_# files executable, change the file permission accordingly (e.g., `chmod +x run_01_unpack_slc`).
 
@@ -20,7 +20,7 @@ stackSentinel.py -h     #To get an overview of all the configurable parameters
 Required parameters of stackSentinel.py include:
 
 ```cfg
--s SLC_DIRNAME          #A folder with downloaded Sentinel-1 SLC’s. 
+-s SLC_DIRNAME          #A folder with downloaded Sentinel-1 SLC’s.
 -o ORBIT_DIRNAME        #A folder containing the Sentinel-1 orbits. Missing orbit files will be downloaded automatically
 -a AUX_DIRNAME          #A folder containing the Sentinel-1 Auxiliary files
 -d DEM_FILENAME         #A DEM (Digital Elevation Model) referenced to wgs84
@@ -32,7 +32,7 @@ In all workflows, coregistration (-C option) can be done using only geometry (se
 
 #### AUX_CAL file download ####
 
-The following calibration auxliary (AUX_CAL) file is used for **antenna pattern correction** to compensate the range phase offset of SAFE products with **IPF verison 002.36** (mainly for images acquired before March 2015). If all your SAFE products are from another IPF version, then no AUX files are needed. Check [ESA document](https://earth.esa.int/documents/247904/1653440/Sentinel-1-IPF_EAP_Phase_correction) for details. 
+The following calibration auxliary (AUX_CAL) file is used for **antenna pattern correction** to compensate the range phase offset of SAFE products with **IPF verison 002.36** (mainly for images acquired before March 2015). If all your SAFE products are from another IPF version, then no AUX files are needed. Check [ESA document](https://earth.esa.int/documents/247904/1653440/Sentinel-1-IPF_EAP_Phase_correction) for details.
 
 The AUX_CAL file is available on [Sentinel-1 Mission Performance Center](https://sar-mpc.eu/ipf-adf/aux_cal/?sentinel1__mission=S1A&validity_start=2014&validity_start=2014-09&adf__active=True). We recommend download it using the web brower or the `wget` command below, and store it somewhere (_i.e._ ~/aux/aux_cal) so that you can use it all the time, for `stackSentinel.py -a` or `auxiliary data directory` in `topsApp.py`.
 
@@ -87,8 +87,8 @@ The generated run files are self descriptive. Below is a short explanation on wh
 
 **run_01_unpack_slc_topo_reference:**
 
-Includes commands to unpack Sentinel-1 TOPS SLCs using ISCE readers. For older SLCs which need antenna elevation pattern correction, the file is extracted and written to disk. For newer version of SLCs which don’t need the elevation antenna pattern correction, only a gdal virtual “vrt” file (and isce xml file) is generated. The “.vrt” file points to the Sentinel SLC file and reads them whenever required during the processing. If a user wants to write the “.vrt” SLC file to disk, it can be done easily using gdal_translate (e.g. gdal_translate –of ENVI File.vrt File.slc). 
-The “run_01_unpack_slc_topo_reference” also includes a command that refers to the config file of the stack reference, which includes configuration for running topo for the stack reference. Note that in the pair-wise processing strategy one should run topo (mapping from range-Doppler to geo coordinate) for all pairs. However, with stackSentinel, topo needs to be run only one time for the reference in the stack. 
+Includes commands to unpack Sentinel-1 TOPS SLCs using ISCE readers. For older SLCs which need antenna elevation pattern correction, the file is extracted and written to disk. For newer version of SLCs which don’t need the elevation antenna pattern correction, only a gdal virtual “vrt” file (and isce xml file) is generated. The “.vrt” file points to the Sentinel SLC file and reads them whenever required during the processing. If a user wants to write the “.vrt” SLC file to disk, it can be done easily using gdal_translate (e.g. gdal_translate –of ENVI File.vrt File.slc).
+The “run_01_unpack_slc_topo_reference” also includes a command that refers to the config file of the stack reference, which includes configuration for running topo for the stack reference. Note that in the pair-wise processing strategy one should run topo (mapping from range-Doppler to geo coordinate) for all pairs. However, with stackSentinel, topo needs to be run only one time for the reference in the stack.
 
 **run_02_average_baseline:**
 
@@ -100,11 +100,11 @@ Burst overlaps are extracted for estimating azimuth misregistration using NESD t
 
 **run_04_overlap_geo2rdr_resample:***
 
-Running geo2rdr to estimate geometrical offsets between secondary burst overlaps and the stack reference burst overlaps. The secondary burst overlaps are then resampled to the stack reference burst overlaps. 
+Running geo2rdr to estimate geometrical offsets between secondary burst overlaps and the stack reference burst overlaps. The secondary burst overlaps are then resampled to the stack reference burst overlaps.
 
 **run_05_pairs_misreg:**
 
-Using the coregistered stack burst overlaps generated from the previous step, differential overlap interferograms are generated and are used for estimating azimuth misregistration using Enhanced Spectral Diversity (ESD) technique. 
+Using the coregistered stack burst overlaps generated from the previous step, differential overlap interferograms are generated and are used for estimating azimuth misregistration using Enhanced Spectral Diversity (ESD) technique.
 
 **run_06_timeseries_misreg:**
 
@@ -112,7 +112,7 @@ A time-series of azimuth and range misregistration is estimated with respect to 
 
 **run_07_geo2rdr_resample:**
 
-Using orbit and DEM, geometrical offsets among all secondary SLCs and the stack reference is computed. The goometrical offsets, together with the misregistration time-series (from previous step) are used for precise coregistration of each burst SLC. 
+Using orbit and DEM, geometrical offsets among all secondary SLCs and the stack reference is computed. The goometrical offsets, together with the misregistration time-series (from previous step) are used for precise coregistration of each burst SLC.
 
 **run_08_extract_stack_valid_region:**
 
@@ -145,7 +145,7 @@ In this example, a stack of interferograms is requested for which up to 2 neares
 stackSentinel.py -s ../SLC/ -d ../../MexicoCity/demLat_N18_N20_Lon_W100_W097.dem.wgs84 -b '19 20 -99.5 -98.5' -a ../../AuxDir/ -o ../../Orbits -c 2
 ```
 
-In the following example, all possible interferograms are being generated and in which the coregistration approach is set to use geometry and not the default NESD. 
+In the following example, all possible interferograms are being generated and in which the coregistration approach is set to use geometry and not the default NESD.
 
 ```
 stackSentinel.py -s ../SLC/ -d ../../MexicoCity/demLat_N18_N20_Lon_W100_W097.dem.wgs84 -b '19 20 -99.5 -98.5' -a ../../AuxDir/ -o ../../Orbits -C geometry -c all
