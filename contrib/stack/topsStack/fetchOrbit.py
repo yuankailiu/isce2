@@ -32,6 +32,11 @@ def cmdLineParse():
     parser.add_argument('-p', '--password', dest='password', type=str, default=None,
                         help='Copernicus Data Space Ecosystem password')
 
+    parser.add_argument('-u', '--username', dest='username', type=str,
+                        help='Copernicus Data Space Ecosystem username')
+    parser.add_argument('-p', '--password', dest='password', type=str,
+                        help='Copernicus Data Space Ecosystem password')
+
     return parser.parse_args()
 
 
