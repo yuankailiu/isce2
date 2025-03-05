@@ -31,9 +31,9 @@ def cmdLineParse():
                         help='Path to output directory')
     parser.add_argument('-t', '--token-file', dest='token_file', type=str, default='.copernicus_dataspace_token',
                         help='Filename to save auth token file')
-    parser.add_argument('-u', '--username', dest='username', type=str,
+    parser.add_argument('-u', '--username', dest='username', type=str, default=None,
                         help='Copernicus Data Space Ecosystem username')
-    parser.add_argument('-p', '--password', dest='password', type=str, default='',
+    parser.add_argument('-p', '--password', dest='password', type=str, default=None,
                         help='Copernicus Data Space Ecosystem password')
 
     return parser.parse_args()
