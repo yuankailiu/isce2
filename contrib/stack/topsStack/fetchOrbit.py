@@ -198,7 +198,6 @@ def run_main(inps, input_file=None):
 
             if match is not None:
                 success = True
-                print('fetch success, orbit type: ', oType)
         except:
             raise
 
