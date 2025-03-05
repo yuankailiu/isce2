@@ -76,7 +76,7 @@ def interp_2d(data1, numberRangeLooks1, numberRangeLooks2, numberAzimuthLooks1, 
     for i in range(length1):
         f = interp1d(index1, data1[i,:], kind='cubic', fill_value="extrapolate")
         data2[i, :] = f(index2)
-    
+
     index1 = np.linspace(0, length1-1, num=length1, endpoint=True)
     index2 = np.linspace(0, length2-1, num=length2, endpoint=True) * nalo/nali + (nalo-nali)/(2.0*nali)
     for j in range(width2):
@@ -178,7 +178,8 @@ if __name__ == '__main__':
         timeReference = datetime.datetime.strptime(dateReference, "%Y%m%d")
         timeSecondary = datetime.datetime.strptime(dateSecondary, "%Y%m%d")
         ts = np.absolute((timeSecondary - timeReference).total_seconds()) / (365.0 * 24.0 * 3600)
-        if (dateReference in dateExcluded) and (dateSecondary in dateExcluded):
+        # stringent criterion, if dateExcluded ever exist in the pairs, drop them
+        if (dateReference in dateExcluded) or (dateSecondary in dateExcluded):
             continue
         if (x in pairExcluded):
             continue
@@ -326,13 +327,13 @@ if __name__ == '__main__':
 
         ionrectfile = os.path.join(odir, dates2[idate]+'.ion')
         if interp and ((numberRangeLooks1 != numberRangeLooks2) or (numberAzimuthLooks1 != numberAzimuthLooks2)):
-            ionrect = interp_2d(ts[idate, :, :], numberRangeLooks1, numberRangeLooks2, numberAzimuthLooks1, numberAzimuthLooks2, 
+            ionrect = interp_2d(ts[idate, :, :], numberRangeLooks1, numberRangeLooks2, numberAzimuthLooks1, numberAzimuthLooks2,
                                 width2=width2, length2=length2)
 
             #mask with overlap of all acquistions
             if maskOverlap:
                 if idate == 0:
-                    flagrect = interp_2d(flag, numberRangeLooks1, numberRangeLooks2, numberAzimuthLooks1, numberAzimuthLooks2, 
+                    flagrect = interp_2d(flag, numberRangeLooks1, numberRangeLooks2, numberAzimuthLooks1, numberAzimuthLooks2,
                                     width2=width2, length2=length2)
                 ionrect *= (flagrect>0.5)
 
