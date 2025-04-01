@@ -309,6 +309,7 @@ def get_dates(inps):
         if safeObj.date  not in excludeList and inps.bbox is not None:
 
             reject_SAFE=True
+            print('getkmlQUAD: ', safe)
             pnts = safeObj.getkmlQUAD(safe)
 
             # process pnts to use generate_geopolygon function
