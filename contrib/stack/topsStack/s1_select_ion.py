@@ -6,15 +6,16 @@
 #example command
 #../../code/s1_select_ion.py -dir . -sn 34/38.5 -nr 5
 
-import os
-import sys
-import glob
-import shutil
-import zipfile
 import argparse
 import datetime
-import numpy as np
+import glob
+import os
+import shutil
+import sys
 import xml.etree.ElementTree as ET
+import zipfile
+
+import numpy as np
 
 
 class sentinelSLC(object):
@@ -100,18 +101,27 @@ def get_safe_from_group(group):
     return safes
 
 
-def print_group(group):
+def print_group(group, sn=False):
     '''print group parameters
     '''
     print()
-    print('slice                                                                    no   ver         IW1 (m)           IW2 (m)           IW3 (m)')
-    print('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+    if not sn:
+        print('slice                                                                    no   ver         IW1 (m)           IW2 (m)           IW3 (m)')
+        print('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+    else:
+        print('slice                                                                    no   ver         IW1 (m)           IW2 (m)           IW3 (m)           sn (deg)')
+        print('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
 
     for i in range(len(group)):
         for j in range(len(group[i])):
             print_stuff = '%s %3d  %s  '%(os.path.basename(group[i][j].safe_file), i+1, group[i][j].proc_version)
             print_stuff += "{} {} {}".format(group[i][j].startingRanges[0], group[i][j].startingRanges[1], group[i][j].startingRanges[2])
+            if sn:
+                print_stuff += '  {:.3f} {:.3f}'.format(group[i][j].snwe[0], group[i][j].snwe[1])
             print(print_stuff)
+        if sn:
+            print('acquisition union sn (deg): {:.3f} {:.3f}'.format(acquistion_snwe(group[i])[0], acquistion_snwe(group[i])[1]))
+
         print()
 
 
@@ -303,7 +313,7 @@ def overlap(group):
     return [s, n, w, e]
 
 
-def check_aoi(group, s, n):
+def check_aoi(group, s, n, slice_check=False):
     '''
     check each group to see if it fully covers [s, n], if not remove the acquistion
     s: south bound
@@ -329,6 +339,38 @@ def check_aoi(group, s, n):
     else:
         group_new = group
         print('no acquistions removed')
+
+
+    ## Discard slices that do not even intersect the aoi
+    if slice_check:
+        print('\nchecking if slices in each acquistion intersect the user specifed south/north bound [{}, {}]'.format(s, n))
+        group = group_new.copy()
+        ngroup = len(group)
+        slice_removed_indices = []
+        #check slices in each acquistion
+        for i in range(len(group)):
+            ngroupi = len(group[i])
+            for j in range(ngroupi):
+                #check if the slice ever intersects the aoi
+                snwe = group[i][j].snwe
+                if not ((snwe[0] >= s and snwe[0] <= n) or (snwe[1] >= s and snwe[1] <= n)):
+                    slice_removed_indices.append([i,j])
+    # remove slices
+    if slice_removed_indices != []:
+        group_new = []
+        for i in range(ngroup):
+            ngroupi = len(group[i])
+            groupi_new = []
+            for j in range(ngroupi):
+                if [i,j] not in slice_removed_indices:
+                    groupi_new.append(group[i][j])
+            group_new.append(groupi_new)
+        print('slices removed:')
+        for index in slice_removed_indices:
+            print('%s %3d'%(os.path.basename(group[index[0]][index[1]].safe_file), index[0]+1))
+    else:
+        group_new = group
+        print('no slices removed')
 
     return group_new
 
@@ -430,6 +472,8 @@ def cmdLineParse():
             help='south and north bound of area of interest, format: -sn south north')
     parser.add_argument('-nr', dest='nr', type=int, default=10,
             help = 'minimum number of acquisitions for same starting ranges. Default: %(default)s.')
+    parser.add_argument('-slice', dest='slice_check', action='store_true', default=False,
+            help = 'check if slices in each acquistion intersect the user specifed south/north bound. Default: %(default)s.')
 
     if len(sys.argv) <= 1:
         print('')
@@ -446,6 +490,12 @@ if __name__ == '__main__':
     s,n = inps.sn
     print('south/north range: ', s, n)
 
+    slice_check = inps.slice_check
+    print('individual slice check: ', slice_check)
+
+    nr = inps.nr
+    print('minimum number of acquisitions for same starting ranges: ', nr)
+
     #group the slices
     group = get_group(inps.dir)
     safes_all = get_safe_from_group(group)
@@ -459,13 +509,16 @@ if __name__ == '__main__':
     #do checks and remove the slices/acquisitions
     group = check_redundancy(group, threshold=1)
     group = check_version(group)
-    group = check_gap(group)
-    group = check_aoi(group, s, n)
+    group = check_aoi(group, s, n, slice_check=slice_check)
+    group = check_gap(group) # check aoi before checking gaps
     group = check_different_starting_ranges(group)
-    group = check_small_number_of_acquisitions_with_same_starting_ranges(group, threshold=inps.nr)
+    group = check_small_number_of_acquisitions_with_same_starting_ranges(group, threshold=nr)
 
     #print group after removing slices/acquistions
-    print_group(group)
+    print_group(group, sn=True)
+
+    # print overlap of group
+    print('overlap (snwe) among elected acquisitions: {}'.format(overlap(group)))
 
     #move slices that are not used to 'not_used'
     safes_used = get_safe_from_group(group)

@@ -25,12 +25,14 @@ def createParser():
             help='input azimuth ionospheric shift')
     parser.add_argument('-o', '--output', dest='output', type=str, required=True,
             help='Directory with output')
-    parser.add_argument('-r', '--nrlks', dest='nrlks', type=int, default=1, 
+    parser.add_argument('-r', '--nrlks', dest='nrlks', type=int, default=1,
             help='number of range looks of azimuth ionospheric shift. Default: 1')
-    parser.add_argument('-a', '--nalks', dest='nalks', type=int, default=1, 
+    parser.add_argument('-a', '--nalks', dest='nalks', type=int, default=1,
             help='number of azimuth looks of azimuth ionospheric shift. Default: 1')
-    parser.add_argument('-t', '--ion_height', dest='ion_height', type=float, default=200.0, 
+    parser.add_argument('-t', '--ion_height', dest='ion_height', type=float, default=200.0,
             help='height of ionospheric layer above the Earth surface in km. Default: 200.0')
+    parser.add_argument('-m', '--maskfile', dest='maskfile', type=str, default=None,
+            help='input maskfile. Pixels labeled (True or nonzero) in the file are treated as invalid in ramp calc')
 
     return parser
 
@@ -58,6 +60,15 @@ def main(iargs=None):
     width = img.width
     length = img.length
     ionShift = np.fromfile(inps.input, dtype=np.float32).reshape(length, width)
+
+    ## *********************
+    if inps.maskfile is not None:
+        ## Yuan-Kai Liu (2025): let's read a waterBody.rdr here to zero out waters
+        ## Signed 8-bit (int8) convention: 0 valid, -1 masked, -2 nodata
+        user_msk = (np.fromfile(inps.maskfile, dtype=np.int8).reshape(length, width))
+        user_msk = user_msk.astype(bool)  # now True=invalid pixels
+        ionShift[user_msk] = 0.0          # set to zeros to be ignored later
+    ## *********************
 
     swathList = ut.getSwathList(inps.reference_stack)
     frameReferenceAll = [ut.loadProduct(os.path.join(inps.reference_stack, 'IW{0}.xml'.format(swath))) for swath in swathList]
@@ -116,7 +127,7 @@ def main(iargs=None):
             firstColumn = int(np.round((burst.startingRange - nearRange)/(dr*inps.nrlks))) + 1
             lastColumn  = int(np.round((burst.startingRange + (burst.numberOfSamples - 1) * dr - nearRange)/(dr*inps.nrlks))) - 1
             ionShiftBurst = ionShift[firstLine:lastLine+1, firstColumn:lastColumn+1]
-            
+
             ionShiftBurstValid = ionShiftBurst[np.nonzero(ionShiftBurst!=0)]
             if ionShiftBurstValid.size < (lastLine - firstLine + 1) * (lastColumn - firstColumn + 1) / 2.0:
                 ionShiftBurstMean = 0.0
@@ -145,7 +156,7 @@ def main(iargs=None):
             phaseRamp = (phaseRamp1 + phaseRamp2) * ionShiftBurstMean - phaseRamp2 * ionShiftSwathMean
 
             outfile = os.path.join(outputDir, '%s_%02d.float'%('burst', burst.burstNumber))
-            
+
             phaseRamp.astype(np.float32).tofile(outfile)
 
             image = isceobj.createImage()
