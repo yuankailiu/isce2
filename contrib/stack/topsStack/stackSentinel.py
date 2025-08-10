@@ -4,18 +4,19 @@
 
 #######################
 
-import os, sys, glob
 import argparse
 import configparser
 import datetime
+import glob
+import os
+import sys
 import time
-import numpy as np
 
 import isce
 import isceobj
+import numpy as np
 from isceobj.Sensor.TOPS.Sentinel1 import Sentinel1
-from topsStack.Stack import config, run, sentinelSLC, ionParamUsr
-
+from topsStack.Stack import config, ionParamUsr, run, sentinelSLC
 
 helpstr = """
 
@@ -309,8 +310,11 @@ def get_dates(inps):
         if safeObj.date  not in excludeList and inps.bbox is not None:
 
             reject_SAFE=True
-            print('getkmlQUAD: ', safe)
-            pnts = safeObj.getkmlQUAD(safe)
+
+            try:
+                pnts = safeObj.getkmlQUAD(safe)
+            except Exception as e:
+                print(f'getkmlQUAD: {os.path.basename(safe)}, Error: {str(e)}')
 
             # process pnts to use generate_geopolygon function
             pnts_bbox = np.empty((4,2))
@@ -370,7 +374,7 @@ def get_dates(inps):
         N.append(safe_dict[date].SNWE[1])
         W.append(safe_dict[date].SNWE[2])
         E.append(safe_dict[date].SNWE[3])
-        print (date , safe_dict[date].SNWE[0],safe_dict[date].SNWE[1])
+        test = 'pass'
         if inps.bbox is not None:
             if safe_dict[date].SNWE[0] <= bbox[0] and safe_dict[date].SNWE[1] >= bbox[1]:
                 safe_dict_bbox[date] = safe_dict[date]
@@ -378,6 +382,9 @@ def get_dates(inps):
             elif date in includeList:
                 safe_dict_finclude[date] = safe_dict[date]
                 safe_dict_bbox_finclude[date] = safe_dict[date]
+            else:
+                test = 'BAD!!'
+        print (date, safe_dict[date].SNWE[0], safe_dict[date].SNWE[1], test)
 
         # tracking dates for which there seems to be a gap in coverage
         if not safe_dict[date].frame_nogap:
@@ -1090,4 +1097,5 @@ def main(iargs=None):
 
 if __name__ == "__main__":
     # Main engine
+    main(sys.argv[1:])
     main(sys.argv[1:])
