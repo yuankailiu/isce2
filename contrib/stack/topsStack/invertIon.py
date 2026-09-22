@@ -257,7 +257,20 @@ if __name__ == '__main__':
         print('observation matrix rank: {}'.format(rank))
 
     ts = np.zeros((ndate-1, length, width), dtype=np.float32)
-    for i in range(length):
+
+    if wls == False:  # vectorize it; all pixels have the same linear matrix
+        pinv = np.dot(np.linalg.inv(np.dot(H0.transpose(), H0)), H0.transpose())
+        obs = ionPairs.reshape(npair, length*width)
+        out = ts.reshape(ndate-1, length*width)
+        chunk = 100000  # calc a chunck concurrently for speed
+        for i0 in range(0, length*width, chunk):
+            print('processing pixel: %9d of %9d' % (min(i0+chunk, length*width), length*width), end='\r')
+            out[:, i0:i0+chunk] = np.dot(pinv, obs[:, i0:i0+chunk])
+        print()
+        ts = out.reshape(ndate-1, length, width)
+
+    # slow looping for wls only (not implemented yet, and can also vectorize)
+    for i in range(length if wls else 0):
         if (i+1) % 50 == 0 or (i+1) == length:
             print('processing line: %6d of %6d' % (i+1, length), end='\r')
         if (i+1) == length:
